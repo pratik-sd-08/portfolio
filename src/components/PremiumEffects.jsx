@@ -1,0 +1,36 @@
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Command, Keyboard, X, Github, Star, GitFork, ExternalLink } from 'lucide-react';
+
+export function ParticleNetwork(){
+  const ref=useRef(null);
+  useEffect(()=>{const c=ref.current,ctx=c.getContext('2d');let raf;let pts=[];const resize=()=>{const d=Math.min(devicePixelRatio||1,1.5);c.width=innerWidth*d;c.height=innerHeight*d;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';ctx.setTransform(d,0,0,d,0,0);pts=Array.from({length:Math.min(55,Math.floor(innerWidth/25))},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,r:Math.random()*1.4+.4}))};resize();addEventListener('resize',resize);const tick=()=>{ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of pts){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>innerWidth)p.vx*=-1;if(p.y<0||p.y>innerHeight)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(120,190,255,.45)';ctx.fill()}for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);if(d<115){ctx.strokeStyle=`rgba(139,92,246,${.12*(1-d/115)})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}raf=requestAnimationFrame(tick)};tick();return()=>{cancelAnimationFrame(raf);removeEventListener('resize',resize)}},[]);
+  return <canvas ref={ref} className="particle-network" aria-hidden="true"/>;
+}
+
+export function CursorParticles(){
+  const ref=useRef(null);
+  useEffect(()=>{const c=ref.current,ctx=c.getContext('2d');let raf;let mx=-100,my=-100;const pts=[];const move=e=>{mx=e.clientX;my=e.clientY;for(let i=0;i<2;i++)pts.push({x:mx,y:my,vx:(Math.random()-.5)*1.4,vy:(Math.random()-.5)*1.4,life:1})};addEventListener('pointermove',move,{passive:true});const resize=()=>{c.width=innerWidth;c.height=innerHeight};resize();addEventListener('resize',resize);const tick=()=>{ctx.clearRect(0,0,c.width,c.height);for(let i=pts.length-1;i>=0;i--){const p=pts[i];p.x+=p.vx;p.y+=p.vy;p.life-=.025;if(p.life<=0){pts.splice(i,1);continue}ctx.fillStyle=`rgba(34,211,238,${p.life*.35})`;ctx.beginPath();ctx.arc(p.x,p.y,1.5*p.life,0,Math.PI*2);ctx.fill()}raf=requestAnimationFrame(tick)};tick();return()=>{cancelAnimationFrame(raf);removeEventListener('pointermove',move);removeEventListener('resize',resize)}},[]);return <canvas ref={ref} className="cursor-particles" aria-hidden="true"/>;
+}
+
+export function KeyboardShortcuts(){
+ const [open,setOpen]=useState(false);useEffect(()=>{const f=e=>{if(e.key==='?'||((e.shiftKey)&&e.key==='/')){e.preventDefault();setOpen(true)}if(e.key==='Escape')setOpen(false)};addEventListener('keydown',f);return()=>removeEventListener('keydown',f)},[]);
+ return <AnimatePresence>{open&&<motion.div className="shortcuts-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onMouseDown={()=>setOpen(false)}><motion.div className="shortcuts-box" initial={{y:20,scale:.97}} animate={{y:0,scale:1}} exit={{y:20,scale:.97}} onMouseDown={e=>e.stopPropagation()}><div className="shortcuts-head"><div><Command size={17}/><strong>Keyboard shortcuts</strong></div><button onClick={()=>setOpen(false)}><X size={17}/></button></div><div className="shortcut-row"><span>Search</span><kbd>/</kbd></div><div className="shortcut-row"><span>Command palette</span><kbd>Ctrl K</kbd></div><div className="shortcut-row"><span>Shortcuts</span><kbd>?</kbd></div><div className="shortcut-row"><span>Close overlays</span><kbd>Esc</kbd></div><p>Tip: use Tab to move through interactive controls.</p></motion.div></motion.div>}</AnimatePresence>
+}
+
+export function RepoShowcase(){
+ const [repos,setRepos]=useState([]);useEffect(()=>{fetch('https://api.github.com/users/pratik-sd-08/repos?sort=updated&per_page=6').then(r=>r.ok?r.json():[]).then(x=>setRepos(Array.isArray(x)?x:[])).catch(()=>{})},[]);
+ return <div className="repo-showcase">{repos.length?repos.map((r,i)=><motion.a className="repo-card" href={r.html_url} target="_blank" rel="noreferrer" key={r.id} initial={{opacity:0,y:18}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:i*.05}} whileHover={{y:-7,rotateX:2,rotateY:i%2?2:-2}}><div className="repo-top"><Github size={17}/><ExternalLink size={14}/></div><h3>{r.name}</h3><p>{r.description||'Public repository from Pratik Raj.'}</p><div className="repo-meta"><span><Star size={12}/> {r.stargazers_count}</span><span><GitFork size={12}/> {r.forks_count}</span><span>{r.language||'Code'}</span></div></motion.a>):Array.from({length:3},(_,i)=><div className="repo-card skeleton" key={i}><div/><div/><div/></div>)}</div>
+}
+
+export function TextEffects({text,mode='words'}){
+ if(mode==='chars') return <span className="char-reveal">{[...text].map((c,i)=><motion.span key={i} initial={{opacity:0,y:14,filter:'blur(6px)'}} animate={{opacity:1,y:0,filter:'blur(0px)'}} transition={{delay:i*.018,duration:.42}}>{c===' '?'\u00a0':c}</motion.span>)}</span>;
+ return <span className="word-reveal">{text.split(' ').map((w,i)=><motion.span key={i} initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{delay:i*.055}}>{w}&nbsp;</motion.span>)}</span>
+}
+
+export function ScrambleText({text}){const [out,setOut]=useState(text);useEffect(()=>{let frame=0;let i=0;const chars='01X#@%&';const timer=setInterval(()=>{i++;setOut(text.split('').map((c,k)=>k<i?c:chars[Math.floor(Math.random()*chars.length)]).join(''));if(i>text.length)clearInterval(timer);},32);return()=>clearInterval(timer)},[text]);return <span>{out}</span>}
+
+export function Typewriter({items=['Full Stack Developer','MERN Engineer','Java / Spring Boot Developer']}){const [i,setI]=useState(0),[text,setText]=useState(''),[del,setDel]=useState(false);useEffect(()=>{const word=items[i];const t=setTimeout(()=>{if(!del){setText(word.slice(0,text.length+1));if(text.length+1===word.length)setTimeout(()=>setDel(true),900)}else{setText(word.slice(0,Math.max(0,text.length-1)));if(text.length===0){setDel(false);setI((i+1)%items.length)}}},del?42:62);return()=>clearTimeout(t)},[text,del,i,items]);return <span className="typewriter">{text}<i/></span>}
+export function AnimatedNumber({value}){const [shown,setShown]=useState('0');useEffect(()=>{const target=String(value), chars=target.split('');let step=0;const t=setInterval(()=>{step++;setShown(chars.slice(0,step).join(''));if(step>=chars.length)clearInterval(t)},90);return()=>clearInterval(t)},[value]);return <span>{shown}</span>}
+
+export function EasterEgg(){const [open,setOpen]=useState(false),[seq,setSeq]=useState('');useEffect(()=>{const f=e=>{if(e.key.length===1){const n=(seq+e.key.toLowerCase()).slice(-7);setSeq(n);if(n==='pratik!')setOpen(true)}if(e.key==='Escape')setOpen(false)};addEventListener('keydown',f);return()=>removeEventListener('keydown',f)},[seq]);return <AnimatePresence>{open&&<motion.div className="easter-egg" initial={{opacity:0,scale:.7}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:.7}} onClick={()=>setOpen(false)}><div><span>SECRET MODE</span><strong>Keep building. Keep shipping.</strong><small>Press Esc or click to close.</small></div></motion.div>}</AnimatePresence>}

@@ -1,0 +1,2 @@
+import { Link } from "react-router-dom";
+export default function NotFound(){return <main className="inner-page not-found"><div className="container"><p className="section-kicker">404</p><h1 className="page-title">Wrong turn.</h1><p className="page-intro">That route does not exist.</p><Link className="btn btn-primary" to="/">Go home</Link></div></main>}
